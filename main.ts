@@ -7,9 +7,18 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+const src = new URL('./entry.png', import.meta.url);
+if (!existsSync(src)) {
+  throw new Error('entry.png missing beside main.ts');
+}
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 mkdirSync(outDir, { recursive: true });
-copyFileSync(new URL('./entry.png', import.meta.url), join(outDir, 'entry.png'));
+const dest = join(outDir, 'entry.png');
+copyFileSync(src, dest);
+// The judge sees exactly these bytes: confirm the copy is whole.
+if (statSync(dest).size !== statSync(src).size) {
+  throw new Error('entry.png copy is incomplete');
+}
